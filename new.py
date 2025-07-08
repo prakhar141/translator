@@ -1,56 +1,57 @@
 import os
-import subprocess
-
-REQUIRED_PACKAGES = [
-    "tensorflow-cpu==2.11.0",
-    "transformers==4.38.2",
-    "sentencepiece==0.2.0",
-    "huggingface-hub==0.16.4",
-    "requests==2.32.4"
-]
-
-for package in REQUIRED_PACKAGES:
-    try:
-        __import__(package.split("==")[0])
-    except ImportError:
-        subprocess.run(["pip", "install", package])
-
+import requests
+import tempfile
 import streamlit as st
 import tensorflow as tf
-import tempfile
-import requests
-import os
-from transformers import AutoTokenizer
+import json
 
 st.set_page_config(page_title="English to Hindi Translator", page_icon="🌍")
 st.title("🌍 English to Hindi Translator 🇮🇳")
 
-@st.cache_resource(show_spinner="🔄 Loading model...")
-def load_model_and_tokenizer():
-    tokenizer = AutoTokenizer.from_pretrained("prakhar146/english-hindi-tf-model")
+@st.cache_resource(show_spinner="🔄 Loading model and config...")
+def load_model_and_config():
+    base_url = "https://huggingface.co/prakhar146/english-hindi-tf-model/resolve/main/"
 
-    # Download .h5 model from HF
-    model_url = "https://huggingface.co/prakhar146/english-hindi-tf-model/resolve/main/tf_model.h5"
+    # Download model
     model_path = os.path.join(tempfile.gettempdir(), "tf_model.h5")
-
     if not os.path.exists(model_path):
+        r = requests.get(base_url + "tf_model.h5")
         with open(model_path, "wb") as f:
-            f.write(requests.get(model_url).content)
+            f.write(r.content)
 
     model = tf.keras.models.load_model(model_path)
-    return tokenizer, model
 
-tokenizer, model = load_model_and_tokenizer()
+    # Download config files (if you need them for anything, optional)
+    config_path = os.path.join(tempfile.gettempdir(), "config.json")
+    gen_config_path = os.path.join(tempfile.gettempdir(), "generation_config.json")
 
-input_text = st.text_area("✏️ Enter English sentence", "Hello, is there anything for translation?")
+    for url, path in [(base_url + "config.json", config_path), (base_url + "generation_config.json", gen_config_path)]:
+        if not os.path.exists(path):
+            r = requests.get(url)
+            with open(path, "wb") as f:
+                f.write(r.content)
+
+    # If needed later
+    with open(config_path) as f:
+        config = json.load(f)
+
+    with open(gen_config_path) as f:
+        generation_config = json.load(f)
+
+    return model, config, generation_config
+
+model, config, generation_config = load_model_and_config()
+
+# UI for user input
+input_text = st.text_area("✏️ Enter English sentence", "Hello, how are you?")
 
 if st.button("🚀 Translate"):
     if not input_text.strip():
         st.warning("Please enter something.")
     else:
-        inputs = tokenizer([input_text.strip()], return_tensors="tf")
-        outputs = model.generate(**inputs, max_length=128)
-        translation = tokenizer.decode(outputs[0], skip_special_tokens=True)
-
+        # Assume model expects input as plain string batch
+        prediction = model.predict([input_text.strip()])
+        
+        # If your model outputs token IDs or characters, you will need to decode them manually
         st.subheader("✅ Hindi Translation")
-        st.success(translation)
+        st.success(prediction[0])  # Adjust this if model output is more complex
