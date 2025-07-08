@@ -4,12 +4,13 @@ import tempfile
 import streamlit as st
 import tensorflow as tf
 import json
+from transformers import AutoTokenizer, TFAutoModelForSeq2SeqLM
 
 st.set_page_config(page_title="English to Hindi Translator", page_icon="🌍")
 st.title("🌍 English to Hindi Translator 🇮🇳")
 
-@st.cache_resource(show_spinner="🔄 Loading model and config...")
-def load_model_and_config():
+@st.cache_resource(show_spinner="🔄 Loading model and tokenizer...")
+def load_model_and_tokenizer():
     base_url = "https://huggingface.co/prakhar146/english-hindi-tf-model/resolve/main/"
 
     # ✅ Download model file
@@ -22,45 +23,31 @@ def load_model_and_config():
     try:
         model = tf.keras.models.load_model(model_path)
     except Exception as e:
-        st.error("❌ Failed to load the model. Make sure tf_model.h5 was saved with both structure + weights.")
+        st.error("❌ Failed to load model. It must be saved with both architecture and weights.")
         raise e
 
-    # ✅ Download config files (Optional for future use)
-    config_path = os.path.join(tempfile.gettempdir(), "config.json")
-    gen_config_path = os.path.join(tempfile.gettempdir(), "generation_config.json")
+    # ✅ Load tokenizer (same as training)
+    tokenizer = AutoTokenizer.from_pretrained("Helsinki-NLP/opus-mt-en-hi")
 
-    for name, path in [("config.json", config_path), ("generation_config.json", gen_config_path)]:
-        if not os.path.exists(path):
-            response = requests.get(base_url + name)
-            with open(path, "wb") as f:
-                f.write(response.content)
+    return model, tokenizer
 
-    # Load config files if needed
-    try:
-        with open(config_path, "r") as f:
-            config = json.load(f)
-        with open(gen_config_path, "r") as f:
-            gen_config = json.load(f)
-    except:
-        config, gen_config = {}, {}
-
-    return model, config, gen_config
-
-model, config, generation_config = load_model_and_config()
+model, tokenizer = load_model_and_tokenizer()
 
 # 📝 User input
 input_text = st.text_area("✏️ Enter English sentence", "Hello, how are you?")
 
-# 🔄 Translation (Assumes model is ready for string input)
+# 🔄 Translate
 if st.button("🚀 Translate"):
     if not input_text.strip():
         st.warning("Please enter something.")
     else:
         try:
-            prediction = model.predict([input_text.strip()])
-            # Show prediction (adjust if model gives token IDs etc.)
+            inputs = tokenizer([input_text], return_tensors="tf")
+            output_ids = model.generate(**inputs, max_length=128)
+            translation = tokenizer.decode(output_ids[0], skip_special_tokens=True)
+
             st.subheader("✅ Hindi Translation")
-            st.success(prediction[0])
+            st.success(translation)
         except Exception as e:
-            st.error("❌ Something went wrong during prediction. Check model input format.")
+            st.error("❌ Prediction failed. Possibly tokenizer or model mismatch.")
             st.exception(e)
