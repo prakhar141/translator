@@ -1,0 +1,11 @@
+streamlit==1.46.1
+tensorflow==2.11.0
+keras==2.11.0
+numpy==1.24.3
+protobuf==3.20.3
+transformers==4.38.2
+sentencepiece==0.2.0
+huggingface-hub==0.33.2
+regex==2024.11.6
+requests==2.32.4
+pyyaml==6.0.2
