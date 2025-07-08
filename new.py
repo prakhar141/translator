@@ -12,7 +12,7 @@ def load_model():
 
 tokenizer, model = load_model()
 
-input_text = st.text_area("✏️ Enter English sentence", "India is a beautiful country.")
+input_text = st.text_area("✏️ Enter English sentence", "Hello,is there anything for translation.")
 
 if st.button("🚀 Translate"):
     if not input_text.strip():
