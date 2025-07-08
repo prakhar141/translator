@@ -1,3 +1,20 @@
+import os
+import subprocess
+
+REQUIRED_PACKAGES = [
+    "tensorflow-cpu==2.11.0",
+    "transformers==4.38.2",
+    "sentencepiece==0.2.0",
+    "huggingface-hub==0.16.4",
+    "requests==2.32.4"
+]
+
+for package in REQUIRED_PACKAGES:
+    try:
+        __import__(package.split("==")[0])
+    except ImportError:
+        subprocess.run(["pip", "install", package])
+
 import streamlit as st
 import tensorflow as tf
 import tempfile
