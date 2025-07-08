@@ -8,4 +8,4 @@ sentencepiece==0.2.0
 huggingface-hub==0.33.2
 regex==2024.11.6
 requests==2.32.4
-pyyaml==6.0.2
+PyYAML==6.0.2
