@@ -32,7 +32,7 @@ def load_model_and_tokenizer():
                 f.write(requests.get(repo_url + fname).content)
 
     # Load model and tokenizer
-    model = TFAutoModelForSeq2SeqLM.from_pretrained(local_dir, from_keras=True)
+    model = TFAutoModelForSeq2SeqLM.from_pretrained(local_dir)
     tokenizer = AutoTokenizer.from_pretrained(local_dir)
 
     return model, tokenizer
