@@ -5,7 +5,7 @@ import streamlit as st
 from transformers import AutoTokenizer, TFAutoModelForSeq2SeqLM
 
 st.set_page_config(page_title="English to Hindi Translator", page_icon="🌍")
-st.title("🌍 English to Hindi Translator 🇮🇳")
+st.title("🌍 English to Hindi Translator ")
 
 @st.cache_resource(show_spinner="🔄 Loading model & tokenizer...")
 def load_model_and_tokenizer():
